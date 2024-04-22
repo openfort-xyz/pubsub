@@ -24,8 +24,8 @@ jobs:
         with:
           go-version: 1.22.0
 
-      - name: ssh
-        run: git config --global url.ssh://git@github.com/.insteadOf https://github.com/
+      - name: Go Vet
+        run: go vet ./...
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v4
