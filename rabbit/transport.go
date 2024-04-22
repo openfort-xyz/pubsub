@@ -2,6 +2,7 @@ package rabbit
 
 import (
 	"context"
+
 	"github.com/rabbitmq/amqp091-go"
 	"go.openfort.xyz/pubsub"
 )

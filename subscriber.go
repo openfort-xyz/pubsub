@@ -2,9 +2,10 @@ package pubsub
 
 import (
 	"context"
-	"github.com/google/uuid"
 	"sync"
 	"sync/atomic"
+
+	"github.com/google/uuid"
 )
 
 // Subscriber is the struct that receives events from the listener and calls the appropriate Handler using the Listener interface agnostic of the underlying implementation.
@@ -16,7 +17,6 @@ type Subscriber struct {
 	mutex         sync.RWMutex
 	wg            sync.WaitGroup
 	subscriptions []*Subscription
-	maxRetries    int
 }
 
 // NewSubscriber creates a new Subscriber with the given Listener.

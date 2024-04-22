@@ -3,6 +3,7 @@ package rabbit
 import (
 	"context"
 	"errors"
+
 	"github.com/rabbitmq/amqp091-go"
 	"go.openfort.xyz/pubsub"
 )
@@ -19,7 +20,7 @@ func NewRabbitListener(amqpURL string) pubsub.Listener {
 	}
 }
 
-func (r *rabbitListener) Connect(ctx context.Context) error {
+func (r *rabbitListener) Connect(_ context.Context) error {
 	conn, err := amqp091.Dial(r.amqpURL)
 	if err != nil {
 		return err
@@ -55,8 +56,12 @@ func (r *rabbitListener) ensureTopic(topic pubsub.Topic) error {
 	return nil
 }
 
-func (r *rabbitListener) Subscribe(ctx context.Context, subscription *pubsub.Subscription) error {
+func (r *rabbitListener) Subscribe(_ context.Context, subscription *pubsub.Subscription) error {
 	err := r.ensureTopic(subscription.Topic)
+	if err != nil {
+		return err
+	}
+
 	messages, err := r.channel.Consume(subscription.Topic.String(), subscription.Consumer, false, false, false, false, nil)
 	if err != nil {
 		return err
