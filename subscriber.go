@@ -71,6 +71,11 @@ func (s *Subscriber) subscriber(ctx context.Context, subscription *Subscription)
 
 // Start starts the Subscriber and listens for events from the Listener.
 func (s *Subscriber) Start(ctx context.Context) error {
+	err := s.listener.Connect(ctx)
+	if err != nil {
+		return err
+	}
+
 	s.mutex.Lock()
 	for topic, handler := range s.eventHandlers {
 		for _, middleware := range s.middlewares {

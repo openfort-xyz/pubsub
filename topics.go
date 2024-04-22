@@ -7,3 +7,8 @@ type Topic string
 func (t Topic) String() string {
 	return string(t)
 }
+
+const (
+	// SendNotificationTopic is the topic for sending notifications.
+	SendNotificationTopic Topic = "send.notification"
+)
