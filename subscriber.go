@@ -17,6 +17,7 @@ type Subscriber struct {
 	mutex         sync.RWMutex
 	wg            sync.WaitGroup
 	subscriptions []*Subscription
+	cancel        context.CancelFunc
 }
 
 // NewSubscriber creates a new Subscriber with the given Listener.
@@ -58,19 +59,28 @@ func (s *Subscriber) handle(ctx context.Context, event *Event) error {
 func (s *Subscriber) subscriber(ctx context.Context, subscription *Subscription) {
 	defer s.wg.Done()
 	for s.running.Load() {
-		err := s.listener.Subscribe(ctx, subscription)
-		if err != nil {
-			return
-		}
+		go func() {
+			err := s.listener.Subscribe(ctx, subscription)
+			if err != nil {
+				close(subscription.Channel)
+				return
+			}
+		}()
 
-		for event := range subscription.Channel {
-			_ = s.handle(ctx, event)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case ev := <-subscription.Channel:
+				_ = s.handle(ctx, ev)
+			}
 		}
 	}
 }
 
 // Start starts the Subscriber and listens for events from the Listener.
 func (s *Subscriber) Start(ctx context.Context) error {
+	ctx, s.cancel = context.WithCancel(ctx)
 	err := s.listener.Connect(ctx)
 	if err != nil {
 		return err
@@ -100,6 +110,7 @@ func (s *Subscriber) Start(ctx context.Context) error {
 // Stop stops gracefully the Subscriber and closes the Listener.
 func (s *Subscriber) Stop(_ context.Context) error {
 	s.running.Store(false)
+	s.cancel()
 	return s.listener.Close()
 }
 
