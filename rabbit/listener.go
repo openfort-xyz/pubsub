@@ -132,19 +132,14 @@ func (r *rabbitListener) Subscribe(ctx context.Context, subscription *pubsub.Sub
 			}
 			event := pubsub.NewEvent(subscription.Topic, msg.Body)
 			event.Metadata = pubsub.Metadata(msg.Headers)
-			select {
-			case subscription.Channel <- event:
-				if r.logger != nil {
-					r.logger.InfoContext(ctx, "Event sent to subscription channel", slog.String("topic", subscription.Topic.String()))
-				}
-				_ = msg.Ack(false)
-			default:
-				if r.logger != nil {
-					r.logger.InfoContext(ctx, "Failed to send event to subscription channel", slog.String("topic", subscription.Topic.String()))
-				}
-				_ = msg.Nack(false, true)
-				return errors.New("failed to send event to subscription channel")
+			if r.logger != nil {
+				r.logger.InfoContext(ctx, "Sending event to subscription channel", slog.String("topic", subscription.Topic.String()))
 			}
+			subscription.Channel <- event
+			if r.logger != nil {
+				r.logger.InfoContext(ctx, "Event sent to subscription channel, sending ack", slog.String("topic", subscription.Topic.String()))
+			}
+			_ = msg.Ack(false)
 		}
 	}
 }
