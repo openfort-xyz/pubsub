@@ -73,12 +73,18 @@ func (r *rabbitListener) Subscribe(ctx context.Context, subscription *pubsub.Sub
 			return nil
 		case msg, ok := <-messages:
 			if !ok {
+				_ = msg.Nack(false, true)
 				return errors.New("channel closed")
 			}
 			event := pubsub.NewEvent(subscription.Topic, msg.Body)
 			event.Metadata = pubsub.Metadata(msg.Headers)
-			subscription.Channel <- event
-			_ = msg.Ack(false)
+			select {
+			case subscription.Channel <- event:
+				_ = msg.Ack(false)
+			default:
+				_ = msg.Nack(false, true)
+				return errors.New("failed to send event to subscription channel")
+			}
 		}
 	}
 }
