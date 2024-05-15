@@ -62,7 +62,7 @@ func (r *rabbitListener) Subscribe(_ context.Context, subscription *pubsub.Subsc
 		return err
 	}
 
-	messages, err := r.channel.Consume(subscription.Topic.String(), subscription.Consumer, true, false, false, false, nil)
+	messages, err := r.channel.Consume(subscription.Topic.String(), subscription.Consumer, false, false, false, false, nil)
 	if err != nil {
 		return err
 	}
@@ -71,6 +71,7 @@ func (r *rabbitListener) Subscribe(_ context.Context, subscription *pubsub.Subsc
 		event := pubsub.NewEvent(subscription.Topic, msg.Body)
 		event.Metadata = pubsub.Metadata(msg.Headers)
 		subscription.Channel <- event
+		_ = msg.Ack(false)
 	}
 
 	return nil
