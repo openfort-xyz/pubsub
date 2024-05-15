@@ -56,7 +56,7 @@ func (r *rabbitListener) ensureTopic(topic pubsub.Topic) error {
 	return nil
 }
 
-func (r *rabbitListener) Subscribe(_ context.Context, subscription *pubsub.Subscription) error {
+func (r *rabbitListener) Subscribe(ctx context.Context, subscription *pubsub.Subscription) error {
 	err := r.ensureTopic(subscription.Topic)
 	if err != nil {
 		return err
@@ -67,14 +67,20 @@ func (r *rabbitListener) Subscribe(_ context.Context, subscription *pubsub.Subsc
 		return err
 	}
 
-	for msg := range messages {
-		event := pubsub.NewEvent(subscription.Topic, msg.Body)
-		event.Metadata = pubsub.Metadata(msg.Headers)
-		subscription.Channel <- event
-		_ = msg.Ack(false)
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case msg, ok := <-messages:
+			if !ok {
+				return errors.New("channel closed")
+			}
+			event := pubsub.NewEvent(subscription.Topic, msg.Body)
+			event.Metadata = pubsub.Metadata(msg.Headers)
+			subscription.Channel <- event
+			_ = msg.Ack(false)
+		}
 	}
-
-	return nil
 }
 
 func (r *rabbitListener) Close() error {

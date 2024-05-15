@@ -71,7 +71,10 @@ func (s *Subscriber) subscriber(ctx context.Context, subscription *Subscription)
 			select {
 			case <-ctx.Done():
 				return
-			case ev := <-subscription.Channel:
+			case ev, ok := <-subscription.Channel:
+				if !ok {
+					return
+				}
 				_ = s.handle(ctx, ev)
 			}
 		}
