@@ -1,8 +1,10 @@
 package rabbit
 
 const (
-	ExchangeName        = "delayed_exchange"
-	ExchangeType        = "x-delayed-message"
+	ExchangeName        = "exchange"
+	ExchangeType        = "direct"
+	ExchangeNameDelayed = "delayed_exchange"
+	ExchangeTypeDelayed = "x-delayed-message"
 	DelayedTypeHeader   = "x-delayed-type"
 	DelayedTypeValue    = "direct"
 	ContentTypeProtobuf = "application/protobuf"

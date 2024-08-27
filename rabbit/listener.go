@@ -14,11 +14,13 @@ type rabbitListener struct {
 	channel    *amqp091.Channel
 	amqpURL    string
 	logger     *slog.Logger
+	delayed    bool
 }
 
-func NewRabbitListener(amqpURL string, logger *slog.Logger) pubsub.Listener {
+func NewRabbitListener(amqpURL string, delayed bool, logger *slog.Logger) pubsub.Listener {
 	return &rabbitListener{
 		amqpURL: amqpURL,
+		delayed: delayed,
 		logger:  logger,
 	}
 }
@@ -50,7 +52,18 @@ func (r *rabbitListener) Connect(ctx context.Context) error {
 	if r.logger != nil {
 		r.logger.InfoContext(ctx, "Declaring exchange")
 	}
-	err = ch.ExchangeDeclare(ExchangeName, ExchangeType, true, false, false, false, amqp091.Table{DelayedTypeHeader: DelayedTypeValue})
+
+	var exchangeName, exchangeType string
+	var table amqp091.Table
+	if r.delayed {
+		exchangeName = ExchangeNameDelayed
+		exchangeType = ExchangeTypeDelayed
+		table = amqp091.Table{DelayedTypeHeader: DelayedTypeValue}
+	} else {
+		exchangeName = ExchangeName
+		exchangeType = ExchangeType
+	}
+	err = ch.ExchangeDeclare(exchangeName, exchangeType, true, false, false, false, table)
 	if err != nil {
 		if r.logger != nil {
 			r.logger.ErrorContext(ctx, "Declaring exchange", slog.String("error", err.Error()))
@@ -78,7 +91,14 @@ func (r *rabbitListener) ensureTopic(ctx context.Context, topic pubsub.Topic) er
 	if r.logger != nil {
 		r.logger.InfoContext(ctx, "Binding topic", slog.String("topic", topic.String()))
 	}
-	err = r.channel.QueueBind(topic.String(), topic.String(), ExchangeName, false, nil)
+
+	var exchangeName string
+	if r.delayed {
+		exchangeName = ExchangeNameDelayed
+	} else {
+		exchangeName = ExchangeName
+	}
+	err = r.channel.QueueBind(topic.String(), topic.String(), exchangeName, false, nil)
 	if err != nil {
 		if r.logger != nil {
 			r.logger.ErrorContext(ctx, "Binding topic", slog.String("topic", topic.String()), slog.String("error", err.Error()))

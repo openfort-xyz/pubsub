@@ -44,7 +44,7 @@ func (r *rabbitTransport) Send(ctx context.Context, event *pubsub.Event) error {
 	}
 
 	return r.channel.PublishWithContext(ctx,
-		ExchangeName,
+		ExchangeNameDelayed,
 		event.Topic.String(),
 		false,
 		false,
