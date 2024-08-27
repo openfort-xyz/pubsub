@@ -63,7 +63,7 @@ func (r *rabbitListener) Connect(ctx context.Context) error {
 		exchangeName = ExchangeName
 		exchangeType = ExchangeType
 	}
-	err = ch.ExchangeDeclare(exchangeName, exchangeType, true, false, false, false, table)
+	err = ch.ExchangeDeclare(exchangeName, exchangeType, r.delayed, false, false, false, table)
 	if err != nil {
 		if r.logger != nil {
 			r.logger.ErrorContext(ctx, "Declaring exchange", slog.String("error", err.Error()))
@@ -80,7 +80,7 @@ func (r *rabbitListener) ensureTopic(ctx context.Context, topic pubsub.Topic) er
 	if r.logger != nil {
 		r.logger.InfoContext(ctx, "Ensuring topic", slog.String("topic", topic.String()))
 	}
-	_, err := r.channel.QueueDeclare(topic.String(), true, false, false, false, nil)
+	_, err := r.channel.QueueDeclare(topic.String(), r.delayed, false, false, false, nil)
 	if err != nil {
 		if r.logger != nil {
 			r.logger.ErrorContext(ctx, "Ensuring topic", slog.String("topic", topic.String()), slog.String("error", err.Error()))
