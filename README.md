@@ -276,6 +276,18 @@ Topic represents a message topic.
 type Topic string
 ```
 
+<a name="SendNotificationTopic"></a>
+
+```go
+const (
+    // SendNotificationTopic is the topic for sending notifications.
+    SendNotificationTopic Topic = "send.notification"
+
+    // UserOperationTopic is the topic for user operations.
+    UserOperationTopic Topic = "user.operation"
+)
+```
+
 <a name="Topic.String"></a>
 ### func \(Topic\) String
 

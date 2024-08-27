@@ -11,4 +11,7 @@ func (t Topic) String() string {
 const (
 	// SendNotificationTopic is the topic for sending notifications.
 	SendNotificationTopic Topic = "send.notification"
+
+	// UserOperationTopic is the topic for user operations.
+	UserOperationTopic Topic = "user.operation"
 )
