@@ -164,7 +164,12 @@ func (r *rabbitListener) Subscribe(ctx context.Context, subscription *pubsub.Sub
 }
 
 func (r *rabbitListener) Close() error {
-	errCh := r.channel.Close()
-	errCo := r.connection.Close()
+	var errCh, errCo error
+	if r.channel != nil {
+		errCh = r.channel.Close()
+	}
+	if r.connection != nil {
+		errCo = r.connection.Close()
+	}
 	return errors.Join(errCh, errCo)
 }
