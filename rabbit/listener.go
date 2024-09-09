@@ -142,9 +142,8 @@ func (r *rabbitListener) Subscribe(ctx context.Context, subscription *pubsub.Sub
 		case msg, ok := <-messages:
 			if !ok {
 				if r.logger != nil {
-					r.logger.InfoContext(ctx, "Channel closed")
+					r.logger.ErrorContext(ctx, "Channel closed")
 				}
-				_ = msg.Nack(false, true)
 				return errors.New("channel closed")
 			}
 			if r.logger != nil {

@@ -114,7 +114,11 @@ func (s *Subscriber) Start(ctx context.Context) error {
 func (s *Subscriber) Stop(_ context.Context) error {
 	s.running.Store(false)
 	s.cancel()
-	return s.listener.Close()
+	if s.listener != nil {
+		return s.listener.Close()
+	}
+
+	return nil
 }
 
 // Handler is the function that processes the event.
