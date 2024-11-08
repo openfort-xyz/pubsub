@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.15] - 2024-11-08
+### Added
+- Topics `transaction.sent`, `transaction.indexed`, `transaction.dropped` and `transaction.confirmed`
+
+## [0.0.14] - 2024-09-09
+### Fixed
+- Close channel and connection only if it is open
+
+## [0.0.13] - 2024-09-09
+### Fixed
+- Log info -> error
+- Close listener only if it is open
+
 ## [0.0.12] - 2024-08-27
 ### Fixed
 - Rabbit durable false to direct exchange
