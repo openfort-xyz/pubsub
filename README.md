@@ -285,6 +285,9 @@ const (
 
     // UserOperationTopic is the topic for user operations.
     UserOperationTopic Topic = "user.operation"
+
+    // TransactionUpdatedTopic is the topic for transaction updates.
+    TransactionUpdatedTopic Topic = "transaction.updated"
 )
 ```
 
