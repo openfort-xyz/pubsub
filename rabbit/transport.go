@@ -10,11 +10,28 @@ import (
 type rabbitTransport struct {
 	connection *amqp091.Connection
 	channel    *amqp091.Channel
+	durable    bool
+	exchange   string
 }
 
 var _ pubsub.Transport = (*rabbitTransport)(nil)
 
-func NewRabbitTransport(amqpURL string) (pubsub.Transport, error) {
+type Option func(*rabbitTransport)
+
+func WithDurable(durability bool) Option {
+	return func(r *rabbitTransport) {
+		r.durable = durability
+	}
+}
+
+func WithDelayed() Option {
+	return func(r *rabbitTransport) {
+		r.durable = true
+		r.exchange = ExchangeNameDelayed
+	}
+}
+
+func NewRabbitTransport(amqpURL string, opts ...Option) (pubsub.Transport, error) {
 	conn, err := amqp091.Dial(amqpURL)
 	if err != nil {
 		return nil, err
@@ -26,14 +43,22 @@ func NewRabbitTransport(amqpURL string) (pubsub.Transport, error) {
 		return nil, err
 	}
 
-	return &rabbitTransport{
+	tp := &rabbitTransport{
 		connection: conn,
 		channel:    ch,
-	}, nil
+		durable:    true,
+		exchange:   ExchangeName,
+	}
+
+	for _, opt := range opts {
+		opt(tp)
+	}
+
+	return tp, nil
 }
 
 func (r *rabbitTransport) Send(ctx context.Context, event *pubsub.Event) error {
-	_, err := r.channel.QueueDeclare(event.Topic.String(), true, false, false, false, nil)
+	_, err := r.channel.QueueDeclare(event.Topic.String(), r.durable, false, false, false, nil)
 	if err != nil {
 		return err
 	}
@@ -44,7 +69,7 @@ func (r *rabbitTransport) Send(ctx context.Context, event *pubsub.Event) error {
 	}
 
 	return r.channel.PublishWithContext(ctx,
-		ExchangeNameDelayed,
+		r.exchange,
 		event.Topic.String(),
 		false,
 		false,
