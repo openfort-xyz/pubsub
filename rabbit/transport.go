@@ -16,22 +16,22 @@ type rabbitTransport struct {
 
 var _ pubsub.Transport = (*rabbitTransport)(nil)
 
-type Option func(*rabbitTransport)
+type TransportOption func(*rabbitTransport)
 
-func WithDurable(durability bool) Option {
+func WithDurable(durability bool) TransportOption {
 	return func(r *rabbitTransport) {
 		r.durable = durability
 	}
 }
 
-func WithDelayed() Option {
+func WithDelayed() TransportOption {
 	return func(r *rabbitTransport) {
 		r.durable = true
 		r.exchange = ExchangeNameDelayed
 	}
 }
 
-func NewRabbitTransport(amqpURL string, opts ...Option) (pubsub.Transport, error) {
+func NewRabbitTransport(amqpURL string, opts ...TransportOption) (pubsub.Transport, error) {
 	conn, err := amqp091.Dial(amqpURL)
 	if err != nil {
 		return nil, err

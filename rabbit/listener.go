@@ -15,14 +15,40 @@ type rabbitListener struct {
 	amqpURL    string
 	logger     *slog.Logger
 	delayed    bool
+	durable    bool
 }
 
-func NewRabbitListener(amqpURL string, delayed bool, logger *slog.Logger) pubsub.Listener {
-	return &rabbitListener{
-		amqpURL: amqpURL,
-		delayed: delayed,
-		logger:  logger,
+type ListenerOption func(*rabbitListener)
+
+func WithLogger(logger *slog.Logger) ListenerOption {
+	return func(r *rabbitListener) {
+		r.logger = logger
 	}
+}
+
+func WithDurability(durability bool) ListenerOption {
+	return func(r *rabbitListener) {
+		r.durable = durability
+	}
+}
+
+func WithDelayedDial() ListenerOption {
+	return func(r *rabbitListener) {
+		r.delayed = true
+		r.durable = true
+	}
+}
+
+func NewRabbitListener(amqpURL string, opts ...ListenerOption) pubsub.Listener {
+	l := &rabbitListener{
+		amqpURL: amqpURL,
+	}
+
+	for _, opt := range opts {
+		opt(l)
+	}
+
+	return l
 }
 
 func (r *rabbitListener) Connect(ctx context.Context) error {
@@ -63,7 +89,7 @@ func (r *rabbitListener) Connect(ctx context.Context) error {
 		exchangeName = ExchangeName
 		exchangeType = ExchangeType
 	}
-	err = ch.ExchangeDeclare(exchangeName, exchangeType, r.delayed, false, false, false, table)
+	err = ch.ExchangeDeclare(exchangeName, exchangeType, r.durable, false, false, false, table)
 	if err != nil {
 		if r.logger != nil {
 			r.logger.ErrorContext(ctx, "Declaring exchange", slog.String("error", err.Error()))
