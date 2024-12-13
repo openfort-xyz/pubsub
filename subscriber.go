@@ -75,7 +75,9 @@ func (s *Subscriber) subscriber(ctx context.Context, subscription *Subscription)
 				if !ok {
 					return
 				}
-				_ = s.handle(ctx, ev)
+				go func() {
+					_ = s.handle(ctx, ev)
+				}()
 			}
 		}
 	}
