@@ -288,6 +288,9 @@ const (
 
     // TransactionUpdatedTopic is the topic for transaction updates.
     TransactionUpdatedTopic Topic = "transaction.updated"
+
+    // WriteMetricTopic is the topic for writing metrics.
+    WriteMetricTopic Topic = "write.metric"
 )
 ```
 
