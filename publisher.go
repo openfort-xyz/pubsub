@@ -16,7 +16,10 @@ func NewPublisher(transport Transport) *Publisher {
 
 // Use adds a transport wrapper to the publisher.
 func (p *Publisher) Use(transport TransportWrapper) {
-	p.Transport = transport(p.Transport)
+	p.Transport = transportWrapper{
+		send:   transport(p.Transport.Send),
+		health: p.Transport.HealthCheck,
+	}
 }
 
 // Publish sends the event to the message broker.
