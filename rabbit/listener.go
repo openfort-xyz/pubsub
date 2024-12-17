@@ -199,3 +199,22 @@ func (r *rabbitListener) Close() error {
 	}
 	return errors.Join(errCh, errCo)
 }
+
+func (r *rabbitListener) HealthCheck(ctx context.Context) error {
+	if r.connection == nil || r.connection.IsClosed() {
+		return errors.New("rabbitmq connection is closed")
+	}
+
+	if r.channel == nil || r.channel.IsClosed() {
+		return errors.New("rabbitmq channel is closed")
+	}
+
+	if err := r.channel.Confirm(false); err != nil {
+		return errors.New("rabbitmq channel health check failed: " + err.Error())
+	}
+
+	if r.logger != nil {
+		r.logger.InfoContext(ctx, "RabbitMQ listener health check passed")
+	}
+	return nil
+}

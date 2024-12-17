@@ -2,6 +2,7 @@ package rabbit
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/rabbitmq/amqp091-go"
 	"go.openfort.xyz/pubsub"
@@ -79,4 +80,20 @@ func (r *rabbitTransport) Send(ctx context.Context, event *pubsub.Event) error {
 			Body:        event.Payload,
 		},
 	)
+}
+
+func (r *rabbitTransport) HealthCheck() error {
+	if r.connection == nil || r.connection.IsClosed() {
+		return fmt.Errorf("rabbitmq connection is closed")
+	}
+
+	if r.channel == nil || r.channel.IsClosed() {
+		return fmt.Errorf("rabbitmq channel is closed")
+	}
+
+	if err := r.channel.Confirm(false); err != nil {
+		return fmt.Errorf("rabbitmq health check failed: %w", err)
+	}
+
+	return nil
 }

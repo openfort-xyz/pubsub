@@ -12,4 +12,7 @@ type Listener interface {
 
 	// Close closes the connection to the message broker.
 	Close() error
+
+	// HealthCheck checks the health of the connection to the message broker.
+	HealthCheck(ctx context.Context) error
 }
