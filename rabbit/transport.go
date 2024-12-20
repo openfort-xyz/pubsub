@@ -10,9 +10,9 @@ import (
 
 type rabbitTransport struct {
 	connection *amqp091.Connection
-	channel    *amqp091.Channel
 	durable    bool
 	exchange   string
+	amqpURL    string
 }
 
 var _ pubsub.Transport = (*rabbitTransport)(nil)
@@ -38,17 +38,11 @@ func NewRabbitTransport(amqpURL string, opts ...TransportOption) (pubsub.Transpo
 		return nil, err
 	}
 
-	ch, err := conn.Channel()
-	if err != nil {
-		_ = conn.Close()
-		return nil, err
-	}
-
 	tp := &rabbitTransport{
 		connection: conn,
-		channel:    ch,
 		durable:    true,
 		exchange:   ExchangeName,
+		amqpURL:    amqpURL,
 	}
 
 	for _, opt := range opts {
@@ -65,7 +59,7 @@ func (r *rabbitTransport) Send(ctx context.Context, event *pubsub.Event) error {
 	}
 	defer ch.Close()
 
-	_, err = r.channel.QueueDeclare(event.Topic.String(), r.durable, false, false, false, nil)
+	_, err = ch.QueueDeclare(event.Topic.String(), r.durable, false, false, false, nil)
 	if err != nil {
 		return err
 	}
@@ -75,7 +69,7 @@ func (r *rabbitTransport) Send(ctx context.Context, event *pubsub.Event) error {
 		headers[k] = v
 	}
 
-	return r.channel.PublishWithContext(ctx,
+	return ch.PublishWithContext(ctx,
 		r.exchange,
 		event.Topic.String(),
 		false,
@@ -93,11 +87,13 @@ func (r *rabbitTransport) HealthCheck() error {
 		return fmt.Errorf("rabbitmq connection is closed")
 	}
 
-	if r.channel == nil || r.channel.IsClosed() {
-		return fmt.Errorf("rabbitmq channel is closed")
+	ch, err := r.connection.Channel()
+	if err != nil {
+		return err
 	}
+	defer ch.Close()
 
-	if err := r.channel.Confirm(false); err != nil {
+	if err := ch.Confirm(false); err != nil {
 		return fmt.Errorf("rabbitmq health check failed: %w", err)
 	}
 
