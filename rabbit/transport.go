@@ -59,7 +59,13 @@ func NewRabbitTransport(amqpURL string, opts ...TransportOption) (pubsub.Transpo
 }
 
 func (r *rabbitTransport) Send(ctx context.Context, event *pubsub.Event) error {
-	_, err := r.channel.QueueDeclare(event.Topic.String(), r.durable, false, false, false, nil)
+	ch, err := r.connection.Channel()
+	if err != nil {
+		return err
+	}
+	defer ch.Close()
+
+	_, err = r.channel.QueueDeclare(event.Topic.String(), r.durable, false, false, false, nil)
 	if err != nil {
 		return err
 	}
