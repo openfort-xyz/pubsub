@@ -57,7 +57,7 @@ func (r *rabbitTransport) Send(ctx context.Context, event *pubsub.Event) error {
 	if err != nil {
 		return err
 	}
-	defer ch.Close()
+	defer ch.Close() // nolint
 
 	_, err = ch.QueueDeclare(event.Topic.String(), r.durable, false, false, false, nil)
 	if err != nil {
@@ -91,7 +91,7 @@ func (r *rabbitTransport) HealthCheck() error {
 	if err != nil {
 		return err
 	}
-	defer ch.Close()
+	defer ch.Close() // nolint
 
 	if err := ch.Confirm(false); err != nil {
 		return fmt.Errorf("rabbitmq health check failed: %w", err)
