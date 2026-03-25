@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/rabbitmq/amqp091-go"
 	"github.com/openfort-xyz/pubsub"
+	"github.com/rabbitmq/amqp091-go"
 )
 
 type rabbitTransport struct {
