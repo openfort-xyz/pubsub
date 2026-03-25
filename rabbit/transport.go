@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/rabbitmq/amqp091-go"
-	"go.openfort.xyz/pubsub"
+	"github.com/openfort-xyz/pubsub"
 )
 
 type rabbitTransport struct {
