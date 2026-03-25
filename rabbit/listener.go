@@ -5,8 +5,8 @@ import (
 	"errors"
 	"log/slog"
 
+	"github.com/openfort-xyz/pubsub"
 	"github.com/rabbitmq/amqp091-go"
-	"go.openfort.xyz/pubsub"
 )
 
 type rabbitListener struct {

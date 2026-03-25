@@ -1,4 +1,4 @@
-module go.openfort.xyz/pubsub
+module github.com/openfort-xyz/pubsub
 
 go 1.22.0
 
