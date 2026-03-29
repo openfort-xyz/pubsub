@@ -3,6 +3,7 @@ package rabbit
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 
 	"github.com/openfort-xyz/pubsub"
@@ -97,6 +98,27 @@ func (r *rabbitListener) Connect(ctx context.Context) error {
 		return err
 	}
 
+	// Manually close the previous channel and connection
+	// to avoid connection leaks if a user calls Connect multiple
+	// times without calling Close in between.
+	if r.channel != nil {
+		err = r.channel.Close()
+		if err != nil {
+			if r.logger != nil {
+				r.logger.ErrorContext(ctx, "Closing channel", slog.String("error", err.Error()))
+			}
+		}
+	}
+
+	if r.connection != nil {
+		err = r.connection.Close()
+		if err != nil {
+			if r.logger != nil {
+				r.logger.ErrorContext(ctx, "Closing connection", slog.String("error", err.Error()))
+			}
+		}
+	}
+
 	r.connection = conn
 	r.channel = ch
 	return nil
@@ -106,6 +128,7 @@ func (r *rabbitListener) ensureTopic(ctx context.Context, topic pubsub.Topic) er
 	if r.logger != nil {
 		r.logger.InfoContext(ctx, "Ensuring topic", slog.String("topic", topic.String()))
 	}
+
 	_, err := r.channel.QueueDeclare(topic.String(), r.delayed, false, false, false, nil)
 	if err != nil {
 		if r.logger != nil {
@@ -139,6 +162,11 @@ func (r *rabbitListener) Subscribe(ctx context.Context, subscription *pubsub.Sub
 	if r.logger != nil {
 		r.logger.InfoContext(ctx, "Subscribing to topic", slog.String("topic", subscription.Topic.String()))
 	}
+
+	if r.channel == nil {
+		return ErrChanClosed
+	}
+
 	err := r.ensureTopic(ctx, subscription.Topic)
 	if err != nil {
 		if r.logger != nil {
@@ -150,6 +178,7 @@ func (r *rabbitListener) Subscribe(ctx context.Context, subscription *pubsub.Sub
 	if r.logger != nil {
 		r.logger.InfoContext(ctx, "Consuming messages", slog.String("topic", subscription.Topic.String()))
 	}
+
 	messages, err := r.channel.Consume(subscription.Topic.String(), subscription.Consumer, false, false, false, false, nil)
 	if err != nil {
 		if r.logger != nil {
@@ -193,24 +222,26 @@ func (r *rabbitListener) Close() error {
 	var errCh, errCo error
 	if r.channel != nil {
 		errCh = r.channel.Close()
+		r.channel = nil
 	}
 	if r.connection != nil {
 		errCo = r.connection.Close()
+		r.connection = nil
 	}
 	return errors.Join(errCh, errCo)
 }
 
 func (r *rabbitListener) HealthCheck(ctx context.Context) error {
 	if r.connection == nil || r.connection.IsClosed() {
-		return errors.New("rabbitmq connection is closed")
+		return ErrConnClosed
 	}
 
 	if r.channel == nil || r.channel.IsClosed() {
-		return errors.New("rabbitmq channel is closed")
+		return ErrChanClosed
 	}
 
 	if err := r.channel.Confirm(false); err != nil {
-		return errors.New("rabbitmq channel health check failed: " + err.Error())
+		return fmt.Errorf("%w: %w", ErrHealthCheckFailed, err)
 	}
 
 	if r.logger != nil {
